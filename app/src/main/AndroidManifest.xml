@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+        STRICT PERMISSION SET – nothing beyond what is required for Spotify ad skipping.
+
+        Explicitly ABSENT (and must never be added):
+        - INTERNET / ACCESS_NETWORK_STATE
+        - READ_CONTACTS / WRITE_CONTACTS
+        - READ_SMS / RECEIVE_SMS / SEND_SMS
+        - READ_CALL_LOG / WRITE_CALL_LOG / CALL_PHONE / ANSWER_PHONE_CALLS
+        - ACCESS_NOTIFICATION_POLICY (DND)
+        - any storage, location, camera, microphone permissions
+    -->
+
+    <!-- Query Spotify package (Android 11+ / 15 requirement for intent resolution) -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Notification listener service permission.
+         Runtime filter inside SpotifyAdListener rejects every package except com.spotify.music. -->
+    <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
+
+    <!-- Shizuku API permission (used only to finish/relaunch the Spotify package) -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+
+    <!-- Battery optimization exemption request (keep the listener alive) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.Light"
+        android:supportsRtl="true"
+        tools:targetApi="35">
+
+        <!-- Main Activity - Permission setup UI only -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Notification Listener Service - Ad detection.
+             Code-level hard filter: only processes notifications from com.spotify.music.
+             Never cancels, snoozes, or modifies notifications.
+             Never touches DND, calls, contacts, or SMS. -->
+        <service
+            android:name=".SpotifyAdListener"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Shizuku Provider -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:exported="true"
+            android:multiprocess="false"
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
+
+    </application>
+
+</manifest>
