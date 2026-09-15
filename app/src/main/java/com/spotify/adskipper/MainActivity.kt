@@ -216,8 +216,33 @@ class MainActivity : AppCompatActivity() {
      * Note: Shizuku service must be running for this to work.
      */
     fun requestShizukuPermission() {
-        if (ShizukuController.isShizukuAvailable()) {
+        try {
+            if (!ShizukuController.isShizukuAvailable()) {
+                android.widget.Toast.makeText(
+                    this,
+                    getString(R.string.shizuku_not_running),
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                updateUIStatus()
+                return
+            }
+
+            if (ShizukuController.checkShizukuPermission()) {
+                updateUIStatus()
+                return
+            }
+
             rikka.shizuku.Shizuku.requestPermission(SHIZUKU_PERMISSION_REQUEST_CODE)
+        } catch (e: Exception) {
+            // Shizuku can throw when its binder disappears or the request is
+            // made while the service is restarting. Do not crash the setup UI.
+            android.util.Log.e(TAG, "Unable to request Shizuku permission", e)
+            android.widget.Toast.makeText(
+                this,
+                "Unable to request Shizuku permission. Please restart Shizuku and try again.",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            updateUIStatus()
         }
     }
     
